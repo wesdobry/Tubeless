@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fast inner-loop test runner. Runs `mix test` inside the exact same pinned
+# Fast inner-loop test runner. Runs `mix test` inside the exact same configured
 # ci-base image as tooling/lint_test.sh, reusing the SAME named volumes — so a
 # warm _build means incremental (not from-scratch) compiles between runs.
 #
@@ -23,13 +23,13 @@
 #   --clean   wipe the cached volumes first, then run
 #   --shell   drop into a shell in the container instead (same as lint_test.sh --shell)
 #
-# Prereqs: Docker running + a one-time `docker login ghcr.io` (image is private).
+# Prerequisite: Docker running. The CI base image is public on Docker Hub.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
-# Single source of truth for the image: read the pinned SHA out of ci.yml so this
+# Single source of truth for the image: read the configured reference from ci.yml so this
 # can never drift from CI. Matches lint_test.sh exactly (same image, same parse).
 CI_BASE_IMAGE="$(awk '/^[[:space:]]*CI_BASE_IMAGE:/ {print $2; exit}' .github/workflows/ci.yml)"
 if [[ -z "${CI_BASE_IMAGE}" ]]; then
@@ -67,7 +67,7 @@ if [[ "${1:-}" == "--shell" ]]; then
   exec docker run -it "${DOCKER_ARGS[@]}" "${CI_BASE_IMAGE}" bash
 fi
 
-echo "Pulling ${CI_BASE_IMAGE} (requires: docker login ghcr.io)..."
+echo "Pulling ${CI_BASE_IMAGE}..."
 docker pull "${CI_BASE_IMAGE}" >/dev/null
 
 # Pass the mix-test args through to the container as positional args ($@ after --).

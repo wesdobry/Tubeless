@@ -4,6 +4,7 @@ on:
   push:
     branches: ['main']
     paths:
+      - '.github/workflows/ci-base.yml'
       - 'docker/ci-base.Dockerfile'
       - 'docker/ci-base.requirements.txt'
   workflow_dispatch:
@@ -14,10 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     env:
-      IMAGE_REPO: ghcr.io/communitymaintained/tubeless-ci-base
-      CI_BASE_IMAGE: ghcr.io/communitymaintained/tubeless-ci-base:latest
+      IMAGE_REPO: docker.io/wesdobry/tubeless-ci-base
 
     steps:
       - name: Checkout
@@ -36,12 +35,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Docker Hub
         uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Build amd64 locally first so we can smoke-test before pushing anything.
       # The multi-arch push later reuses the buildx cache, so the second build
@@ -88,4 +86,4 @@ jobs:
         run: |
           echo "Pushed:" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ steps.tags.outputs.sha_tag }}\` (immutable; pin consumers here)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ steps.tags.outputs.latest_tag }}\` (floating; local dev only)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.tags.outputs.latest_tag }}\` (floating; bootstrap/local dev only)" >> $GITHUB_STEP_SUMMARY

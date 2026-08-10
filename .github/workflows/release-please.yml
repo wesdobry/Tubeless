@@ -5,10 +5,10 @@ on:
     branches: ['main']
 
 env:
-  # Pinned to a smoke-tested ci-base build. Bump via PR after a new ci-base.yml run.
-  # NOTE: keep this in sync with the test job's container.image — the env context
-  # isn't available there, so the SHA is duplicated and must be bumped in both.
-  CI_BASE_IMAGE: ghcr.io/communitymaintained/tubeless-ci-base:sha-2060ab9
+  # Bootstrap reference for the new Docker Hub repository. After the first
+  # ci-base.yml run, replace latest with the immutable sha-* tag from its summary.
+  # Keep this in sync with the test job's container.image.
+  CI_BASE_IMAGE: docker.io/wesdobry/tubeless-ci-base:latest
 
 jobs:
   test:
@@ -16,15 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: read
-    # Run every step natively inside the sha-pinned ci-base image. GitHub mounts
+    # Run every step natively inside the configured ci-base image. GitHub mounts
     # the workspace into the container, so no compose, no detached keepalive, and
     # no `exec -T` TTY workaround are needed.
     container:
-      image: ghcr.io/communitymaintained/tubeless-ci-base:sha-2060ab9
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      image: docker.io/wesdobry/tubeless-ci-base:latest
     env:
       MIX_ENV: test
 
@@ -99,7 +95,6 @@ jobs:
     if: needs.release-please.outputs.release_created == 'true'
     permissions:
       contents: read
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -114,8 +109,7 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: |
-            docker.io/communitymaintained/tubeless
-            ghcr.io/${{ github.repository }}
+            docker.io/wesdobry/tubeless
           tags: |
             type=raw,value=${{ steps.version.outputs.value }}
             type=raw,value=latest
@@ -131,13 +125,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7

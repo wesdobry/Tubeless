@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run the equivalent of .github/workflows/ci.yml's `test` job locally, before
-# pushing. It executes the exact same steps inside the exact same pinned
+# pushing. It executes the exact same steps inside the exact same configured
 # ci-base image CI uses, so a green run here means a green `test` job in CI.
 #
 # Why Docker: the repo has no committed SQLean extensions and assumes a Linux
@@ -13,8 +13,7 @@
 # They persist between runs (fast incremental re-runs) and never touch your host
 # tree. Pass --clean to wipe them and start fresh.
 #
-# Prereqs: Docker running, and a one-time `docker login ghcr.io` (the pinned
-# ci-base image is private). Usage:
+# Prerequisite: Docker running. The CI base image is public on Docker Hub. Usage:
 #   tooling/lint_test.sh            # full run (deps + sqlean + db + mix check)
 #   tooling/lint_test.sh --clean    # drop cached volumes first, then full run
 #   tooling/lint_test.sh --shell    # drop into a shell in the CI container
@@ -23,7 +22,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
-# Single source of truth for the image: read the pinned SHA out of ci.yml so
+# Single source of truth for the image: read the configured reference from ci.yml so
 # this can never drift from what CI runs. Matches the `CI_BASE_IMAGE:` env line.
 # awk (not sed \s, which BSD/macOS sed lacks) so this parses portably.
 CI_BASE_IMAGE="$(awk '/^[[:space:]]*CI_BASE_IMAGE:/ {print $2; exit}' .github/workflows/ci.yml)"
@@ -72,7 +71,7 @@ if [[ "${1:-}" == "--shell" ]]; then
   exec docker run -it "${DOCKER_ARGS[@]}" "${CI_BASE_IMAGE}" bash
 fi
 
-echo "Pulling ${CI_BASE_IMAGE} (requires: docker login ghcr.io)..."
+echo "Pulling ${CI_BASE_IMAGE}..."
 docker pull "${CI_BASE_IMAGE}"
 
 # The steps below mirror ci.yml's `test` job 1:1.

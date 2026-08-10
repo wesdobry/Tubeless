@@ -90,7 +90,7 @@ If it doesn't work for your use case, please make a feature request! You can als
 ```yaml
 services:
   tubeless:
-    image: ghcr.io/communitymaintained/tubeless:latest
+    image: wesdobry/tubeless:latest
     environment:
       # Set the timezone to your local timezone
       - TZ=America/Chicago
@@ -110,11 +110,9 @@ services:
 Tubeless is a drop-in replacement for Pinchflat — the data format is identical, so no database changes are needed. This works whether you're coming from the original `kieraneglin/pinchflat` or the `CommunityMaintained/pinchflat` fork. Just update the image reference in your Docker run command or compose file:
 
 ```text
-ghcr.io/kieraneglin/pinchflat:latest          →  ghcr.io/communitymaintained/tubeless:latest
-ghcr.io/communitymaintained/pinchflat:latest  →  ghcr.io/communitymaintained/tubeless:latest
+ghcr.io/kieraneglin/pinchflat:latest          →  wesdobry/tubeless:latest
+ghcr.io/communitymaintained/pinchflat:latest  →  wesdobry/tubeless:latest
 ```
-
-Also available on Docker Hub as `communitymaintained/tubeless:latest`.
 
 Stop the old container, update the image reference, and recreate it. Your `/config` and `/downloads` volumes carry over unchanged.
 

@@ -45,4 +45,4 @@ TBA
 
 ## Release process
 
-Releases are managed automatically by [release-please](https://github.com/googleapis/release-please). When PRs are merged to `main`, release-please maintains a running Release PR that tracks the next version. Merging that PR cuts a release, publishes a GitHub Release, and pushes versioned Docker images to GHCR and Docker Hub.
+Releases are managed automatically by [release-please](https://github.com/googleapis/release-please). When PRs are merged to `main`, release-please maintains a running Release PR that tracks the next version. Merging that PR cuts a release, publishes a GitHub Release, and pushes versioned images to `wesdobry/tubeless` on Docker Hub.

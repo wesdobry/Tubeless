@@ -11,7 +11,7 @@ Tubeless is a self-hosted Phoenix/Elixir web app that wraps `yt-dlp` to automati
 > **On macOS, run tests through Docker, not natively.** The suite needs Linux-only
 > binaries (SQLean `.so`, yt-dlp/ffmpeg/Deno/Apprise) that aren't available on the
 > host, so `mix test` / `mix check` will not work directly. Use the two wrapper
-> scripts below — they run inside the pinned ci-base image and share a warm build
+> scripts below — they run inside the configured ci-base image and share a warm build
 > cache:
 >
 > - `tooling/test.sh [args…]` — **fast iteration loop.** Passes everything through
@@ -207,10 +207,10 @@ While iterating on a change, run the relevant tests with `tooling/test.sh <path>
 Before staging and committing, always run these two checks in order:
 
 1. `prettier . --check --config=.prettierrc.js --ignore-path=.prettierignore --ignore-path=.gitignore --write` — auto-fixes formatting so CI's prettier check doesn't fail.
-2. `tooling/lint_test.sh` — reproduces `.github/workflows/ci.yml`'s `test` job (compiler, credo, sobelow, ExUnit, prettier check) inside the same pinned ci-base Docker image, so a green run here means a green CI `test` job. Requires Docker. Run this after prettier and before every commit.
+2. `tooling/lint_test.sh` — reproduces `.github/workflows/ci.yml`'s `test` job (compiler, credo, sobelow, ExUnit, prettier check) inside the same configured ci-base Docker image, so a green run here means a green CI `test` job. Requires Docker. Run this after prettier and before every commit.
 3. If on main branch, create new branch for your commits.
 
-Releases are automated via release-please using semantic versioning (current version tracked in `version.txt`, e.g. `1.2.0`). Merging the release PR cuts a release and publishes Docker images to GHCR and Docker Hub. (`mix version.bump` / `tooling/version_bump.sh` still produce a legacy date-based `YYYY.M.D` version and predate the move to release-please — prefer the release-please flow.)
+Releases are automated via release-please using semantic versioning (current version tracked in `version.txt`, e.g. `1.2.0`). Merging the release PR cuts a release and publishes Docker images to `wesdobry/tubeless` on Docker Hub. (`mix version.bump` / `tooling/version_bump.sh` still produce a legacy date-based `YYYY.M.D` version and predate the move to release-please — prefer the release-please flow.)
 
 Never push commits unless explicitly asked to do. I prefer commits amended if the work is related to a new feature or a new fix.
 

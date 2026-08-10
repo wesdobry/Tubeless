@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the production selfhosted image locally, exactly like ci.yml's
-# docker-pr job does — same Dockerfile, same pinned CI_BASE_IMAGE build-arg —
+# docker-pr job does — same Dockerfile, same configured CI_BASE_IMAGE build-arg —
 # but entirely on your machine: nothing is pushed anywhere, so a staged/local
 # commit never needs to go through GitHub to get built and smoke-tested.
 #
@@ -30,8 +30,7 @@
 # you get a live shell alongside the running app. Either way, the container is
 # stopped and removed automatically once you exit.
 #
-# Prereqs: Docker running + a one-time `docker login ghcr.io` (the pinned
-# ci-base image the Dockerfile builds FROM is private).
+# Prerequisite: Docker running. The CI base image is public on Docker Hub.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -65,7 +64,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Pulling ${CI_BASE_IMAGE} (requires: docker login ghcr.io)..."
+echo "Pulling ${CI_BASE_IMAGE}..."
 docker pull "${CI_BASE_IMAGE}" >/dev/null
 
 echo "==> Building ${TAG} from docker/selfhosted.Dockerfile"

@@ -30,7 +30,7 @@ Tests mock yt-dlp/apprise via `test/scripts/yt-dlp-mocks/` — no real network c
 
 **On macOS** the suite can't run natively (needs the Linux SQLean `.so` extensions
 and the yt-dlp/ffmpeg/Deno/Apprise toolchain). Run tests through Docker instead —
-same pinned ci-base image as CI, with a shared warm build cache:
+same configured ci-base image as CI, with a shared warm build cache:
 
 ```bash
 tooling/test.sh                               # whole suite (fast iteration loop)
@@ -155,13 +155,13 @@ Now" button and an opt-in monthly cron (`DatabaseMaintenanceWorker`), which rese
 a quiet window by pausing the job queues instead of stopping the app. Maintenance
 mode is for the cases where the file has to be touched from outside the app.
 
-## Utility: List Published GHCR Images
+## Utility: List Published Docker Hub Images
 
-Requires `gh` CLI auth.
+Requires `curl` and `jq`. The repository must be public.
 
 ```bash
-bash tooling/list-images.sh                         # CommunityMaintained/tubeless
-bash tooling/list-images.sh MyOrg my-image-name    # custom org/image
+bash tooling/list-images.sh                         # wesdobry/tubeless
+bash tooling/list-images.sh my-user my-image-name  # custom namespace/image
 ```
 
 ## Indexing System

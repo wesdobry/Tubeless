@@ -118,8 +118,7 @@ File reconciliation (`lib/pinchflat/reconciliation/`) trues up already-downloade
 | GitHub Actions          | CI/CD platform — PR checks, releases, Docker image builds                        |
 | Docker / Docker Compose | Containerization for both dev and production                                     |
 | Docker Buildx + QEMU    | Multi-architecture builds (`linux/amd64` + `linux/arm64`)                        |
-| GHCR                    | GitHub Container Registry — hosts PR, RC, and CI base images                     |
-| Docker Hub              | Public release image hosting (`communitymaintained/pinchflat`)                   |
+| Docker Hub              | Hosts release, PR/RC, and CI base images under the `wesdobry` namespace          |
 | release-please          | Automated semantic versioning and changelog generation from Conventional Commits |
 | Renovate                | Automated dependency update PRs                                                  |
 
@@ -147,10 +146,10 @@ esbuild and Tailwind are driven through Mix aliases defined in `mix.exs`, not st
 
 | File                              | Used in    | Purpose                                                                                                                                                                                                               |
 | --------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docker/ci-base.Dockerfile`       | CI/release | Shared base image (`ghcr.io/communitymaintained/pinchflat-ci-base`) — provides Elixir, OTP, Node, FFmpeg, yt-dlp, Deno, Apprise. Both dev and selfhosted images build FROM it so toolchain versions live in one place |
+| `docker/ci-base.Dockerfile`       | CI/release | Shared base image (`docker.io/wesdobry/tubeless-ci-base`) — provides Elixir, OTP, Node, FFmpeg, yt-dlp, Deno, Apprise. Both dev and selfhosted images build FROM it so toolchain versions live in one place |
 | `docker/ci-base.requirements.txt` | CI/release | Pinned pip requirements (e.g. Apprise) installed into the ci-base image, managed by Renovate                                                                                                                          |
-| `docker/dev.Dockerfile`           | local only | Dev image — builds FROM `pinchflat-ci-base`, then installs dev extras (oh-my-zsh, dev deps)                                                                                                                           |
-| `docker/selfhosted.Dockerfile`    | CI/release | Production multi-stage build — builder stage runs on `pinchflat-ci-base` and compiles the OTP release; minimal runtime image with only production deps (ffmpeg/yt-dlp copied from the builder)                        |
+| `docker/dev.Dockerfile`           | local only | Dev image — builds FROM `tubeless-ci-base`, then installs dev extras (oh-my-zsh, dev deps)                                                                                                                            |
+| `docker/selfhosted.Dockerfile`    | CI/release | Production multi-stage build — builder stage runs on `tubeless-ci-base` and compiles the OTP release; minimal runtime image with only production deps (ffmpeg/yt-dlp copied from the builder)                         |
 | `docker/docker-run.dev.sh`        | local only | Dev container startup script — installs deps, migrates DB, starts IEX Phoenix server                                                                                                                                  |
 | `docker-compose.yml`              | local only | Local dev environment (builds `dev.Dockerfile`, mounts working dir, exposes port 4008)                                                                                                                                |
 
@@ -183,8 +182,8 @@ Both files are CI/release only — they are never run locally.
 
 | File                 | Purpose                                                                                                                                |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`             | PR pipeline — linting, Docker build/cache, pushes PR/RC image to GHCR                                                                  |
-| `release-please.yml` | Release pipeline — runs tests, invokes Release-Please, bumps versions, builds and pushes multi-arch Docker images to Docker Hub + GHCR |
+| `ci.yml`             | PR pipeline — linting, Docker build/cache, and publishing PR/RC images to Docker Hub                                                   |
+| `release-please.yml` | Release pipeline — runs tests, invokes Release-Please, bumps versions, and pushes multi-arch release images to Docker Hub              |
 
 ---
 

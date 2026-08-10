@@ -12,10 +12,9 @@ on:
         default: ''
 
 env:
-  # Bootstrap reference for the new Docker Hub repository. After the first
-  # ci-base.yml run, replace latest with the immutable sha-* tag from its summary.
+  # Pinned to a smoke-tested ci-base build. Bump via PR after a new ci-base.yml run.
   # Keep this in sync with the test job's container.image.
-  CI_BASE_IMAGE: docker.io/wesdobry/tubeless-ci-base:latest
+  CI_BASE_IMAGE: docker.io/wesdobry/tubeless-ci-base:sha-27f76a2
 
 jobs:
   test:
@@ -28,7 +27,7 @@ jobs:
     # workspace into the container, so no compose, no detached keepalive, and no
     # `exec -T` TTY workaround are needed.
     container:
-      image: docker.io/wesdobry/tubeless-ci-base:latest
+      image: docker.io/wesdobry/tubeless-ci-base:sha-27f76a2
     env:
       MIX_ENV: test
 

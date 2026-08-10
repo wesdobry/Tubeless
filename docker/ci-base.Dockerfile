@@ -76,10 +76,24 @@ RUN npm install -g yarn
   # Install baseline Elixir packages
 RUN mix local.hex --force && \
     mix local.rebar --force
-  # Install Deno - required for YouTube downloads (See yt-dlp#14404)
-RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- ${DENO_VERSION} -y --no-modify-path && \
-  # Download yt-dlp (pinned to latest at base image build time)
-  export YT_DLP_DOWNLOAD=$(case ${TARGETPLATFORM:-linux/amd64} in \
+# Install Deno without executing the target-architecture binary during the build.
+# Running the upstream installer under QEMU can crash with SIGILL while building arm64.
+RUN export DENO_ARCHIVE=$(case ${TARGETPLATFORM:-linux/amd64} in \
+    "linux/amd64") echo "deno-x86_64-unknown-linux-gnu.zip" ;; \
+    "linux/arm64") echo "deno-aarch64-unknown-linux-gnu.zip" ;; \
+    *) echo "" ;; \
+  esac) && \
+  test -n "${DENO_ARCHIVE}" && \
+  export DENO_URL="https://github.com/denoland/deno/releases/download/${DENO_VERSION}/${DENO_ARCHIVE}" && \
+  curl -fsSL "${DENO_URL}" -o "/tmp/${DENO_ARCHIVE}" && \
+  curl -fsSL "${DENO_URL}.sha256sum" -o "/tmp/${DENO_ARCHIVE}.sha256sum" && \
+  (cd /tmp && sha256sum -c "${DENO_ARCHIVE}.sha256sum") && \
+  unzip -q "/tmp/${DENO_ARCHIVE}" -d /usr/local/bin && \
+  chmod a+rx /usr/local/bin/deno && \
+  rm "/tmp/${DENO_ARCHIVE}" "/tmp/${DENO_ARCHIVE}.sha256sum"
+
+# Download yt-dlp (pinned to latest at base image build time).
+RUN export YT_DLP_DOWNLOAD=$(case ${TARGETPLATFORM:-linux/amd64} in \
   "linux/amd64")   echo "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"   ;; \
   "linux/arm64")   echo "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64" ;; \
   *)               echo "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"        ;; esac) && \

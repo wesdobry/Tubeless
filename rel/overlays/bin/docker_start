@@ -25,5 +25,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# The local HTTP provider is the fast path. The matching script provider is
+# installed at its default path as a fallback if this background process fails.
+echo "Starting bgutil PO-token provider"
+/app/bin/bgutil_provider_start &
+
 cd -P -- "$(dirname -- "$0")"
 PHX_SERVER=true exec ./tubeless start

@@ -12,6 +12,8 @@
 #   - yt-dlp:  intentionally floats to latest at base build time. selfhosted's runner
 #              re-installs yt-dlp fresh on every release build, and runtime self-updates
 #              via PostBootStartupTasks, so the version here doesn't reach production.
+#   - bgutil:  pinned to a matching provider image/plugin release and checksum. Renovate
+#              manages the version; update the checksum with every release bump.
 #   - oh-my-zsh: floats to master. Affects dev shell ergonomics only; low stakes.
 #
 # Drift caveat: ci-base ships ffmpeg into selfhosted's runner, so bumping the ffmpeg
@@ -21,13 +23,16 @@
 # publishes specific combos, so Renovate tracks each against the real hexpm/elixir
 # tag list (customManagers in renovate.json) and groups the bumps into one PR — it
 # never proposes a value from a combo that isn't published. Debian stays on trixie-slim.
-ARG ELIXIR_VERSION=1.20.2
-ARG OTP_VERSION=29.0.4
-ARG DEBIAN_VERSION=trixie-20260713-slim
+ARG ELIXIR_VERSION=1.20.4
+ARG OTP_VERSION=29.0.6
+ARG DEBIAN_VERSION=trixie-20260824-slim
 # renovate: datasource=github-releases depName=denoland/deno
-ARG DENO_VERSION=v2.9.0
+ARG DENO_VERSION=v2.9.6
 # renovate: datasource=node-version depName=node
 ARG NODE_MAJOR=24
+# renovate: datasource=github-releases depName=Brainicism/bgutil-ytdlp-pot-provider
+ARG BGUTIL_PROVIDER_VERSION=2.0.0
+ARG BGUTIL_PROVIDER_IMAGE="docker.io/brainicism/bgutil-ytdlp-pot-provider:${BGUTIL_PROVIDER_VERSION}-deno"
 # NOT renovate-tracked: ffmpeg is pinned for issue #347 (illegal instruction on some CPUs).
 # Newer builds must be smoke-tested manually before bumping. FFMPEG_BUILD is paired with
 # FFMPEG_RELEASE — both come from the same yt-dlp/FFmpeg-Builds release page.
@@ -36,6 +41,8 @@ ARG FFMPEG_BUILD=N-125858-g86940d45af
 
 ARG DEV_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 
+FROM ${BGUTIL_PROVIDER_IMAGE} AS bgutil_provider
+
 FROM ${DEV_IMAGE}
 
 # Re-declare ARGs needed inside the build stage. ARGs declared before FROM
@@ -43,6 +50,7 @@ FROM ${DEV_IMAGE}
 ARG TARGETPLATFORM
 ARG DENO_VERSION
 ARG NODE_MAJOR
+ARG BGUTIL_PROVIDER_VERSION
 ARG FFMPEG_RELEASE
 ARG FFMPEG_BUILD
 
@@ -91,6 +99,19 @@ RUN export DENO_ARCHIVE=$(case ${TARGETPLATFORM:-linux/amd64} in \
   unzip -q "/tmp/${DENO_ARCHIVE}" -d /usr/local/bin && \
   chmod a+rx /usr/local/bin/deno && \
   rm "/tmp/${DENO_ARCHIVE}" "/tmp/${DENO_ARCHIVE}.sha256sum"
+
+# Install the pinned bgutil PO-token provider and its yt-dlp plugin. The provider
+# image supplies a multi-arch, production-only node_modules tree; cache it with
+# Tubeless's Deno so runtime startup never needs to download dependencies.
+COPY --from=bgutil_provider /app /opt/bgutil-ytdlp-pot-provider/server
+RUN export BGUTIL_PLUGIN_URL="https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/download/${BGUTIL_PROVIDER_VERSION}/bgutil-ytdlp-pot-provider.zip" && \
+  mkdir -p /etc/yt-dlp/plugins /root/bgutil-ytdlp-pot-provider && \
+  curl -fsSL "${BGUTIL_PLUGIN_URL}" -o /etc/yt-dlp/plugins/bgutil-ytdlp-pot-provider.zip && \
+  echo "bce874dfa25896c2798e0f4f8147b7b22e785479eb1e459ab232bf2506c95016  /etc/yt-dlp/plugins/bgutil-ytdlp-pot-provider.zip" | sha256sum -c - && \
+  ln -s /opt/bgutil-ytdlp-pot-provider/server /root/bgutil-ytdlp-pot-provider/server && \
+  cd /opt/bgutil-ytdlp-pot-provider/server && \
+  DENO_DIR=/opt/bgutil-ytdlp-pot-provider/server/.cache/deno deno cache --frozen src/main.ts && \
+  test "$(cd node_modules && DENO_DIR=../.cache/deno deno run --cached-only --frozen --allow-env --allow-net --allow-ffi=. --allow-read=. ../src/generate_once.ts --version)" = "${BGUTIL_PROVIDER_VERSION}"
 
 # Download yt-dlp (pinned to latest at base image build time).
 RUN export YT_DLP_DOWNLOAD=$(case ${TARGETPLATFORM:-linux/amd64} in \

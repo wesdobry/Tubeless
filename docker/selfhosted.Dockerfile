@@ -1,9 +1,14 @@
 # Builder stage runs on the shared ci-base image — it already provides Elixir, OTP,
 # build-essential, git, curl, node+yarn, hex, rebar, and the pinned ffmpeg binary.
 # Runner stage stays on debian:trixie-slim to keep the production image small.
-ARG DEBIAN_VERSION=trixie-20260713-slim
+ARG DEBIAN_VERSION=trixie-20260824-slim
 ARG CI_BASE_IMAGE="docker.io/wesdobry/tubeless-ci-base:latest"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+# renovate: datasource=github-releases depName=Brainicism/bgutil-ytdlp-pot-provider
+ARG BGUTIL_PROVIDER_VERSION=2.0.0
+ARG BGUTIL_PROVIDER_IMAGE="docker.io/brainicism/bgutil-ytdlp-pot-provider:${BGUTIL_PROVIDER_VERSION}-deno"
+
+FROM ${BGUTIL_PROVIDER_IMAGE} AS bgutil_provider
 
 FROM ${CI_BASE_IMAGE} AS builder
 
@@ -58,12 +63,17 @@ ARG PORT=8945
 # Deno is pinned to match ci-base so dev/CI and production run the same version.
 # Keep this in sync with DENO_VERSION in docker/ci-base.Dockerfile.
 # renovate: datasource=github-releases depName=denoland/deno
-ARG DENO_VERSION=v2.9.0
+ARG DENO_VERSION=v2.9.6
+ARG BGUTIL_PROVIDER_VERSION
 
 # ffmpeg comes from ci-base (pinned there, see issue #347). Bumping it requires
 # rebuilding ci-base and bumping the consumer pin — drift is intentional.
 COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=builder /usr/bin/ffprobe /usr/bin/ffprobe
+
+# Copy the pinned, multi-arch provider server. The matching yt-dlp plugin is
+# downloaded and verified below after the runtime dependencies are installed.
+COPY --from=bgutil_provider /app /opt/bgutil-ytdlp-pot-provider/server
 
 # Apprise is pinned via the shared requirements file so dev/CI and production
 # install the same version (single source of truth with ci-base).
@@ -96,6 +106,16 @@ RUN apt-get update -y && \
     # Install Deno - required for YouTube downloads (See yt-dlp#14404). Pinned to
     # match ci-base via DENO_VERSION above.
     curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- ${DENO_VERSION} -y --no-modify-path && \
+    # Install the matching bgutil yt-dlp plugin, cache the provider with Deno,
+    # and expose the default script-method path as a fallback to the HTTP server.
+    export BGUTIL_PLUGIN_URL="https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/download/${BGUTIL_PROVIDER_VERSION}/bgutil-ytdlp-pot-provider.zip" && \
+    mkdir -p /etc/yt-dlp/plugins /root/bgutil-ytdlp-pot-provider && \
+    curl -fsSL "${BGUTIL_PLUGIN_URL}" -o /etc/yt-dlp/plugins/bgutil-ytdlp-pot-provider.zip && \
+    echo "bce874dfa25896c2798e0f4f8147b7b22e785479eb1e459ab232bf2506c95016  /etc/yt-dlp/plugins/bgutil-ytdlp-pot-provider.zip" | sha256sum -c - && \
+    ln -s /opt/bgutil-ytdlp-pot-provider/server /root/bgutil-ytdlp-pot-provider/server && \
+    cd /opt/bgutil-ytdlp-pot-provider/server && \
+    DENO_DIR=/opt/bgutil-ytdlp-pot-provider/server/.cache/deno deno cache --frozen src/main.ts && \
+    test "$(cd node_modules && DENO_DIR=../.cache/deno deno run --cached-only --frozen --allow-env --allow-net --allow-ffi=. --allow-read=. ../src/generate_once.ts --version)" = "${BGUTIL_PROVIDER_VERSION}" && \
     # Apprise (version pinned in docker/ci-base.requirements.txt, managed by Renovate)
     export PIPX_HOME=/opt/pipx && \
     export PIPX_BIN_DIR=/usr/local/bin && \

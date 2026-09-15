@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+provider_home=/opt/bgutil-ytdlp-pot-provider/server
+
+export DENO_DIR="${provider_home}/.cache/deno"
+export DENO_NO_PROMPT=1
+export DENO_NO_UPDATE_CHECK=1
+
+cd "${provider_home}/node_modules"
+
+# Version 2.0.0 binds to IPv4 and IPv6 loopback by default. Keeping the server
+# private to this container avoids exposing its unauthenticated token endpoint.
+exec /usr/local/bin/deno run \
+  --cached-only \
+  --frozen \
+  --allow-env \
+  --allow-net \
+  --allow-ffi=. \
+  --allow-read=. \
+  ../src/main.ts

@@ -36,8 +36,8 @@ ARG BGUTIL_PROVIDER_IMAGE="docker.io/brainicism/bgutil-ytdlp-pot-provider:${BGUT
 # NOT renovate-tracked: ffmpeg is pinned for issue #347 (illegal instruction on some CPUs).
 # Newer builds must be smoke-tested manually before bumping. FFMPEG_BUILD is paired with
 # FFMPEG_RELEASE — both come from the same yt-dlp/FFmpeg-Builds release page.
-ARG FFMPEG_RELEASE=autobuild-2026-07-30-16-10
-ARG FFMPEG_BUILD=N-125858-g86940d45af
+ARG FFMPEG_RELEASE=autobuild-2026-09-14-19-25
+ARG FFMPEG_BUILD=N-126556-g639ee84952
 
 ARG DEV_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 
@@ -76,7 +76,7 @@ RUN export FFMPEG_BASE_URL="https://github.com/yt-dlp/FFmpeg-Builds/releases/dow
       "linux/amd64")   echo "${FFMPEG_BASE_URL}-linux64-gpl.tar.xz"   ;; \
       "linux/arm64")   echo "${FFMPEG_BASE_URL}-linuxarm64-gpl.tar.xz" ;; \
       *)               echo ""        ;; esac) && \
-    curl -L ${FFMPEG_DOWNLOAD} --output /tmp/ffmpeg.tar.xz && \
+    curl -fsSL "${FFMPEG_DOWNLOAD}" --output /tmp/ffmpeg.tar.xz && \
     tar -xf /tmp/ffmpeg.tar.xz --strip-components=2 --no-anchored -C /usr/bin/ ffmpeg ffprobe
 
 RUN npm install -g yarn

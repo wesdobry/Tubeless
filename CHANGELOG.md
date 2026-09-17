@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/wesdobry/Tubeless/compare/v0.0.2...v0.0.3) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** use updated ci-base image sha-32aa2d3 ([1c037ae](https://github.com/wesdobry/Tubeless/commit/1c037aeeaa7cccd2ea8834d4c45b371a53f9ee2d))
+
 ## [0.0.2](https://github.com/wesdobry/Tubeless/compare/v0.0.1...v0.0.2) (2026-09-17)
 
 

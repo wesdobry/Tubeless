@@ -14,7 +14,7 @@ on:
 env:
   # Pinned to a smoke-tested ci-base build. Bump via PR after a new ci-base.yml run.
   # Keep this in sync with the test job's container.image.
-  CI_BASE_IMAGE: docker.io/wesdobry/tubeless-ci-base:sha-27f76a2
+  CI_BASE_IMAGE: docker.io/wesdobry/tubeless-ci-base:sha-32aa2d3
 
 jobs:
   test:
@@ -27,7 +27,7 @@ jobs:
     # workspace into the container, so no compose, no detached keepalive, and no
     # `exec -T` TTY workaround are needed.
     container:
-      image: docker.io/wesdobry/tubeless-ci-base:sha-27f76a2
+      image: docker.io/wesdobry/tubeless-ci-base:sha-32aa2d3
     env:
       MIX_ENV: test
 

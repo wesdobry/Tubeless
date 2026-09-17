@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/wesdobry/Tubeless/compare/v0.0.1...v0.0.2) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** update pinned FFmpeg build ([05cf50e](https://github.com/wesdobry/Tubeless/commit/05cf50ea0d96d466bc0d595e130dfd96ab674555))
+
 ## [0.0.1](https://github.com/wesdobry/Tubeless/compare/v0.5.0...v0.0.1) (2026-08-10)
 
 

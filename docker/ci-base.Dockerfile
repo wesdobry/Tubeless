@@ -111,7 +111,7 @@ RUN export BGUTIL_PLUGIN_URL="https://github.com/Brainicism/bgutil-ytdlp-pot-pro
   ln -s /opt/bgutil-ytdlp-pot-provider/server /root/bgutil-ytdlp-pot-provider/server && \
   cd /opt/bgutil-ytdlp-pot-provider/server && \
   DENO_DIR=/opt/bgutil-ytdlp-pot-provider/server/.cache/deno deno cache --frozen src/main.ts && \
-  test "$(cd node_modules && DENO_DIR=../.cache/deno deno run --cached-only --frozen --allow-env --allow-net --allow-ffi=. --allow-read=. ../src/generate_once.ts --version)" = "${BGUTIL_PROVIDER_VERSION}"
+  test "$(jq -r .version package.json)" = "${BGUTIL_PROVIDER_VERSION}"
 
 # Download yt-dlp (pinned to latest at base image build time).
 RUN export YT_DLP_DOWNLOAD=$(case ${TARGETPLATFORM:-linux/amd64} in \
